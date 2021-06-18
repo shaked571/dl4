@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.data/
+.vector_cache/
+.idea/
+snli_1.0/
