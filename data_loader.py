@@ -1,5 +1,6 @@
 import os
 import pickle
+import zipfile
 
 import torchtext.legacy as legacy
 
@@ -11,7 +12,8 @@ TEST_CACHE_PATH = os.path.join(CACHE_DIR, 'test.pkl')
 INPUT_CACHE_PATH = os.path.join(CACHE_DIR, 'input.pkl')
 ANSWERS_CACHE_PATH = os.path.join(CACHE_DIR, 'answers.pkl')
 
-CACHE_FILES = [TRAIN_CACHE_PATH, DEV_CACHE_PATH, TEST_CACHE_PATH,INPUT_CACHE_PATH, ANSWERS_CACHE_PATH]
+CACHE_FILES = [TRAIN_CACHE_PATH, DEV_CACHE_PATH, TEST_CACHE_PATH, INPUT_CACHE_PATH, ANSWERS_CACHE_PATH]
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '.data', "snli"))
 
 
 def from_cache():
@@ -57,9 +59,17 @@ def load_snli():
         answers = legacy.data.Field(sequential=False)
 
         # make splits for data
-        train, dev, test = legacy.datasets.SNLI.splits(
-            text_field=inputs, label_field=answers
-        )
+        try:
+            train, dev, test = legacy.datasets.SNLI.splits(
+                text_field=inputs, label_field=answers
+            )
+        except OSError as error:
+            with zipfile.ZipFile(".data/snli/snli_1.0.zip", "r") as zip_ref:
+                zip_ref.extractall(DATA_PATH)
+            train, dev, test = legacy.datasets.SNLI.splits(
+                text_field=inputs, label_field=answers
+            )
+
         inputs.build_vocab(train, min_freq=1, vectors="glove.6B.300d")
         answers.build_vocab(train)
         save_cache(list(train), list(dev), list(test), inputs, answers)
