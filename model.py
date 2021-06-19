@@ -12,23 +12,22 @@ class BiLSTM(nn.Module):
             embeddings=pre_trained_emb, freeze=True
         )
 
-        self.embed_dim = self.embedding.embedding_dim #TODO verify
+        self.embed_dim = self.embedding.embedding_dim
         self.dropout_val = dropout
+        self.dropout = nn.Dropout(dropout)
 
         self.blstm = nn.LSTM(input_size=self.embed_dim,
                             hidden_size=hidden_dim,
                             num_layers=2,
                             bidirectional=True)
-        # self.linear = nn.Linear(2*hidden_dim, self.vocab.num_of_labels)
 
-    def forward(self, x, x_lens):
-        embeds = self.embedding(x)
-        x_packed = pack_padded_sequence(embeds, x_lens, batch_first=True, enforce_sorted=False)
-        out, (last_hidden_state, c_n) = self.blstm(x_packed)
-        out, _ = pad_packed_sequence(out, batch_first=True)
-        # out = self.linear(out)
-        # out = out.flatten(0, 1)
-        return out
+    def forward(self, x):
+        output = self.embedding(x)
+        output = self.dropout(output)
+        output = self.relu(output) #TODO need?? read paper
+        output = output.transpose(0, 1)  # make it (seq_len, batch_size, features)
+        output, (hidden, cell) = self.lstm(output.unsqueeze(0))
+        return output, (hidden, cell)
 
 
 class InnerAttention(nn.Module):
@@ -50,10 +49,10 @@ class Siamese(nn.Module):
         self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout)
         self.inner_attention = InnerAttention(hidden_dim=hidden_dim)
 
-    def forward(self, prem, prem_lens, hyp, hyp_lens):
+    def forward(self, prem, hyp):
 
-        prem_vec = self.bilstm(prem, prem_lens)
-        hyp_vec = self.bilstm(hyp, hyp_lens)
+        prem_vec, (hidden, cell) = self.bilstm(prem)
+        hyp_vec, (hidden, cell) = self.bilstm(hyp)
 
         prem_atten = self.inner_attention(prem_vec)
         hyp_atten = self.inner_attention(hyp_vec)
