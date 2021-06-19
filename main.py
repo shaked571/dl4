@@ -29,7 +29,7 @@ def model_xavier():
 class Trainer:
     def __init__(self, how2run=ORIGINAL, n_ep=1,lr=0.001, steps_to_eval=500):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.data, self.inputs, self.answers = load_snli()
+        self.train,self.dev, self.test, self.inputs, self.answers = load_snli()
         if how2run == ORIGINAL:
             self.model = Siamese()
             self.lr = lr

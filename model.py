@@ -4,10 +4,9 @@ import torch
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, vocab, dropout=0.2, sent_len=128):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.2, sent_len=128):
         super(BiLSTM, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.vocab = vocab
         self.hidden_dim = hidden_dim
         self.vocab_size = self.vocab.vocab_size
         self.sent_len = sent_len
@@ -35,11 +34,10 @@ class BiLSTM(nn.Module):
 
 
 class InnerAttention(nn.Module):
-    def __init__(self, embedding_dim: int, hidden_dim: int, vocab: Vocab):
+    def __init__(self, embedding_dim: int, hidden_dim: int):
         super(InnerAttention, self).__init__()
         self.embed_dim = embedding_dim
         self.hidden_dim = hidden_dim
-        self.vocab_size = vocab.vocab_size
         self.tanh = nn.Tanh()
         self.softmax = nn.Softmax(dim=1)
         self.w_y = nn.Linear(self.hidden_dim, self.hidden_dim)
@@ -50,12 +48,11 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, embedding_dim: int, hidden_dim: int, vocab: Vocab, dropout=0.2, sent_len=128):
+    def __init__(self, embedding_dim: int, hidden_dim: int,dropout=0.2, sent_len=128):
         super(Siamese, self).__init__()
-        self.bilstm = BiLSTM(embedding_dim, hidden_dim, vocab, dropout, sent_len)
+        self.bilstm = BiLSTM(embedding_dim, hidden_dim, dropout, sent_len)
         self.inner_attention = InnerAttention(embedding_dim=embedding_dim,
-                                              hidden_dim=hidden_dim,
-                                              vocab=vocab)
+                                              hidden_dim=hidden_dim)
 
     def forward(self, prem, prem_lens, hyp, hyp_lens):
         prem_vec = self.bilstm(prem, prem_lens)

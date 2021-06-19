@@ -80,7 +80,7 @@ def load_snli():
         inputs.build_vocab(train, min_freq=1, vectors="glove.6B.300d")
         answers.build_vocab(train)
         save_cache(list(train), list(dev), list(test), inputs, answers)
-    return (train, dev, test), inputs, answers
+    return train, dev, test, inputs, answers
 
 
 
@@ -118,8 +118,3 @@ def load_snli():
 #         index_sent += 1
 #     return torch.cat(sentences_ret)
 #
-import time
-start = time.time()
-load_snli()
-end = time.time()
-print(end - start)
