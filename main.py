@@ -16,15 +16,6 @@ ORIGINAL = 'o'
 WITH_XAVIER = 'x'
 
 
-def pad_collate(batch):
-    (s1, s2, l) = zip(*batch)
-    sent1_lens = [len(sent) for sent in s1]
-    sent2_lens = [len(sent) for sent in s2]
-
-    s1_pad = pad_sequence(s1, batch_first=True, padding_value=0)
-    s2_pad = pad_sequence(s2, batch_first=True, padding_value=0)
-
-    return s1_pad, s2_pad, sent1_lens, sent2_lens, l
 
 
 def model_xavier():
@@ -42,9 +33,9 @@ class Trainer:
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
         test_set = SNLIDataSet(test_raw,  self.inputs_info, self.labels_info)
 
-        self.train_d = DataLoader(train_set, batch_size=self.batch_size, collate_fn=pad_collate)
-        self.dev_d = DataLoader(dev_set, batch_size=self.batch_size, collate_fn=pad_collate)
-        self.test_d = DataLoader(test_set, batch_size=self.batch_size, collate_fn=pad_collate)
+        self.train_d = DataLoader(train_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
+        self.dev_d = DataLoader(dev_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
+        self.test_d = DataLoader(test_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
 
         self.embedding_vectors = self.inputs_info.vocab.vectors
         if how2run == ORIGINAL:
@@ -72,6 +63,17 @@ class Trainer:
         self.best_model = None
         self.best_score = 0
 
+
+    def pad_collate(self, batch):
+        (s1, s2, l) = zip(*batch)
+        sent1_lens = [len(sent) for sent in s1]
+        sent2_lens = [len(sent) for sent in s2]
+
+        s1_pad = pad_sequence(s1, batch_first=True, padding_value=0)
+        s2_pad = pad_sequence(s2, batch_first=True, padding_value=0)
+
+        return s1_pad.to(self.device), s2_pad.to(self.device), sent1_lens, sent2_lens, l.to(self.device)
+
     def train(self):
         num_samples = 0
         for epoch in range(self.n_epochs):
@@ -81,9 +83,6 @@ class Trainer:
             self.model.train()  # prep model for training
             for step, (s1, s2, sent1_lens, sent2_lens, target) in tqdm(enumerate(self.train_d), total=len(self.train_d)):
                 num_samples += self.batch_size
-                s1 = s1.to(self.device)
-                s2 = s2.to(self.device)
-                target = target.to(self.device)
                 # clear the gradients of all optimized variables
                 self.optimizer.zero_grad()
                 self.model.zero_grad()
@@ -117,11 +116,7 @@ class Trainer:
             correct = 0
             for step, (s1, s2, sent1_lens, sent2_lens, target) in tqdm(enumerate(data_set), total=len(data_set),
                                                   desc=f"dev step {step} loop"):
-                s1 = s1.to(self.device)
-                s2 = s2.to(self.device)
-                target = target.to(self.device)
                 output = self.model(s1, s2)
-
                 loss = self.loss_func(output.detach(), target.view(-1))
                 loss += loss.item() * s1.size(0)
                 _, predicted = torch.max(output, 1)
