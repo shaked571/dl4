@@ -63,9 +63,16 @@ def load_snli():
             train, dev, test = legacy.datasets.SNLI.splits(
                 text_field=inputs, label_field=answers
             )
-        except OSError as error:
+        except OSError:
+            from io import BytesIO
+
+            # filebytes = BytesIO(get_zip_data())
+            # myzipfile = zipfile.ZipFile(filebytes)
+            # for name in myzipfile.namelist():
+            #     [ ... ]
             with zipfile.ZipFile(".data/snli/snli_1.0.zip", "r") as zip_ref:
-                zip_ref.extractall(DATA_PATH)
+                members2extract = ['snli_1.0/',  'snli_1.0/snli_1.0_dev.jsonl', 'snli_1.0/snli_1.0_dev.txt', 'snli_1.0/snli_1.0_test.jsonl', 'snli_1.0/snli_1.0_test.txt', 'snli_1.0/snli_1.0_train.jsonl', 'snli_1.0/snli_1.0_train.txt']
+                zip_ref.extractall(DATA_PATH, members2extract)
             train, dev, test = legacy.datasets.SNLI.splits(
                 text_field=inputs, label_field=answers
             )
