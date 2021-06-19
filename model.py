@@ -4,16 +4,19 @@ import torch
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, embedding_dim: int, hidden_dim: int, vocab: Vocab, dropout=0.2, sent_len=128):
+    def __init__(self, pre_trained_emb, hidden_dim: int, vocab, dropout=0.2, sent_len=128):
         super(BiLSTM, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.vocab = vocab
         self.hidden_dim = hidden_dim
         self.vocab_size = self.vocab.vocab_size
         self.sent_len = sent_len
-        self.embed_dim = embedding_dim
+        self.embedding = nn.Embedding.from_pretrained(
+            embeddings=pre_trained_emb, freeze=True
+        )
+
+        self.embed_dim = self.embedding.vocab_size #TODO verify
         self.dropout_val = dropout
-        self.embedding = nn.Embedding(self.vocab_size, self.embed_dim, padding_idx=0) # TODO: don't update the weights
 
         self.blstm = nn.LSTM(input_size=self.embed_dim,
                             hidden_size=hidden_dim,

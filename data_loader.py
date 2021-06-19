@@ -84,40 +84,40 @@ def load_snli():
 
 
 
-def glov_dict():
-    glov_dir = wget.download("http://nlp.stanford.edu/data/{}".format('glove.6B.zip'))
-    zip = zipfile.ZipFile(glov_dir)
-    zip.extractall(path=".")
-
-    glov = {}
-    with open("./data/glove.6B.300d.txt", 'r') as f:
-        for line in f:
-            values = line.split()
-            word = values[0]
-            vector = np.asarray(values[1:], "float32")
-            glov[word] = torch.from_numpy(vector)
-            glov[word] = glov[word].type(torch.float)
-    return glov
-
-
-def get_glove_vector(sentences, F2I):
-    index_sent = 0
-    sentences_ret = []
-    for sent in sentences:
-        sentence = []
-        index_word = 0
-        for word in sent:
-            if word in F2I:
-                sentence.append(F2I[word].reshape(1, -1))
-            else:
-                sentence.append(F2I[UNIQUE].reshape(1, -1))
-            index_word += 1
-        sentence = torch.cat(sentence)
-        sentence = sentence.reshape(1, sentence.shape[0], sentence.shape[1])
-        sentences_ret.append(sentence)
-        index_sent += 1
-    return torch.cat(sentences_ret)
-
+# def glov_dict():
+#     glov_dir = wget.download("http://nlp.stanford.edu/data/{}".format('glove.6B.zip'))
+#     zip = zipfile.ZipFile(glov_dir)
+#     zip.extractall(path=".")
+#
+#     glov = {}
+#     with open("./data/glove.6B.300d.txt", 'r') as f:
+#         for line in f:
+#             values = line.split()
+#             word = values[0]
+#             vector = np.asarray(values[1:], "float32")
+#             glov[word] = torch.from_numpy(vector)
+#             glov[word] = glov[word].type(torch.float)
+#     return glov
+#
+#
+# def get_glove_vector(sentences, F2I):
+#     index_sent = 0
+#     sentences_ret = []
+#     for sent in sentences:
+#         sentence = []
+#         index_word = 0
+#         for word in sent:
+#             if word in F2I:
+#                 sentence.append(F2I[word].reshape(1, -1))
+#             else:
+#                 sentence.append(F2I[UNIQUE].reshape(1, -1))
+#             index_word += 1
+#         sentence = torch.cat(sentence)
+#         sentence = sentence.reshape(1, sentence.shape[0], sentence.shape[1])
+#         sentences_ret.append(sentence)
+#         index_sent += 1
+#     return torch.cat(sentences_ret)
+#
 import time
 start = time.time()
 load_snli()
