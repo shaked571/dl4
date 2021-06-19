@@ -24,13 +24,14 @@ def from_cache():
             files.append(cur_f)
     return tuple(files)
 
+
 def exists_cache():
     return all([os.path.isfile(f) for f in CACHE_FILES])
+
 
 def save_pkl(f2dump, out_path):
     with open(out_path, 'wb') as handle:
         pickle.dump(f2dump, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
 
 
 def save_cache(train, dev, test, inputs, answers):
@@ -41,7 +42,6 @@ def save_cache(train, dev, test, inputs, answers):
     save_pkl(test, TEST_CACHE_PATH)
     save_pkl(inputs, INPUT_CACHE_PATH)
     save_pkl(answers, ANSWERS_CACHE_PATH)
-
 
 
 def load_snli():
@@ -81,7 +81,6 @@ def load_snli():
         answers.build_vocab(train)
         save_cache(list(train), list(dev), list(test), inputs, answers)
     return train, dev, test, inputs, answers
-
 
 
 # def glov_dict():
