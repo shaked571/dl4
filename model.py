@@ -4,11 +4,10 @@ import torch
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.2, sent_len=128):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.2):
         super(BiLSTM, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.hidden_dim = hidden_dim
-        self.sent_len = sent_len
         self.embedding = nn.Embedding.from_pretrained(
             embeddings=pre_trained_emb, freeze=True
         )
@@ -46,9 +45,9 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.2, sent_len=128):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.2):
         super(Siamese, self).__init__()
-        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, sent_len)
+        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout)
         self.inner_attention = InnerAttention(hidden_dim=hidden_dim)
 
     def forward(self, prem, prem_lens, hyp, hyp_lens):

@@ -21,6 +21,8 @@ def from_cache():
     for fp in CACHE_FILES:
         with open(fp, 'rb') as f:
             cur_f = pickle.load(f)
+            if fp == ANSWERS_CACHE_PATH:
+                cur_f = remove_unk(cur_f)
             files.append(cur_f)
     return tuple(files)
 
@@ -49,39 +51,46 @@ def load_snli():
         return from_cache()
     else:
         inputs = legacy.data.Field(
-            init_token="</s>",
+            init_token="<s>",
+            eos_token="</s>",
             tokenize='spacy',
             tokenizer_language='en_core_web_sm',
             lower=True,
             batch_first=True,
             include_lengths=True
         )
-        answers = legacy.data.Field(sequential=False)
+        target = legacy.data.Field(sequential=False, is_target=True)
 
         # make splits for data
         try:
             train, dev, test = legacy.datasets.SNLI.splits(
-                text_field=inputs, label_field=answers
+                text_field=inputs, label_field=target
             )
         except OSError:
-            from io import BytesIO
-
-            # filebytes = BytesIO(get_zip_data())
-            # myzipfile = zipfile.ZipFile(filebytes)
-            # for name in myzipfile.namelist():
-            #     [ ... ]
             with zipfile.ZipFile(".data/snli/snli_1.0.zip", "r") as zip_ref:
-                members2extract = ['snli_1.0/',  'snli_1.0/snli_1.0_dev.jsonl', 'snli_1.0/snli_1.0_dev.txt', 'snli_1.0/snli_1.0_test.jsonl', 'snli_1.0/snli_1.0_test.txt', 'snli_1.0/snli_1.0_train.jsonl', 'snli_1.0/snli_1.0_train.txt']
+                members2extract = ['snli_1.0/',  'snli_1.0/snli_1.0_dev.jsonl',
+                                   'snli_1.0/snli_1.0_dev.txt', 'snli_1.0/snli_1.0_test.jsonl',
+                                   'snli_1.0/snli_1.0_test.txt', 'snli_1.0/snli_1.0_train.jsonl',
+                                   'snli_1.0/snli_1.0_train.txt']
                 zip_ref.extractall(DATA_PATH, members2extract)
             train, dev, test = legacy.datasets.SNLI.splits(
-                text_field=inputs, label_field=answers
+                text_field=inputs, label_field=target
             )
 
         inputs.build_vocab(train, min_freq=1, vectors="glove.6B.300d")
-        answers.build_vocab(train)
-        save_cache(list(train), list(dev), list(test), inputs, answers)
-    return train, dev, test, inputs, answers
+        target.build_vocab(train)
+        save_cache(list(train), list(dev), list(test), inputs, target)
+    target = remove_unk(target)
 
+    return train, dev, test, inputs, target
+
+
+def remove_unk(target):
+    target.vocab.stoi.pop('<unk>')
+    target.vocab.itos.remove('<unk>')
+    for k, v in target.vocab.stoi.items():
+        target.vocab.stoi[k] = v - 1
+    return target
 
 # def glov_dict():
 #     glov_dir = wget.download("http://nlp.stanford.edu/data/{}".format('glove.6B.zip'))
