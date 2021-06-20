@@ -16,8 +16,6 @@ ORIGINAL = 'o'
 WITH_XAVIER = 'x'
 
 
-
-
 def model_xavier():
     pass
 
@@ -62,7 +60,6 @@ class Trainer:
         self.writer = SummaryWriter(log_dir=f"tensor_board/{output_path}")
         self.best_model = None
         self.best_score = 0
-
 
     def pad_collate(self, batch):
         (s1, s2, l) = zip(*batch)
@@ -146,6 +143,7 @@ class Trainer:
             res += f"{k}_{v}_"
         res = res.strip("_")
         return res
+
 
 if __name__ == '__main__':
     trainer = Trainer()
