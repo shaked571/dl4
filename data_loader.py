@@ -3,16 +3,15 @@ import pickle
 import zipfile
 
 import torchtext.legacy as legacy
+from vocab import Vocab
 
-UNIQUE = '<uuukkk>'
 CACHE_DIR = '.cache'
 TRAIN_CACHE_PATH = os.path.join(CACHE_DIR, 'train.pkl')
 DEV_CACHE_PATH = os.path.join(CACHE_DIR, 'dev.pkl')
 TEST_CACHE_PATH = os.path.join(CACHE_DIR, 'test.pkl')
-INPUT_CACHE_PATH = os.path.join(CACHE_DIR, 'input.pkl')
-ANSWERS_CACHE_PATH = os.path.join(CACHE_DIR, 'answers.pkl')
+VOCAB_CACHE_PATH = os.path.join(CACHE_DIR, 'vocab.pkl')
 
-CACHE_FILES = [TRAIN_CACHE_PATH, DEV_CACHE_PATH, TEST_CACHE_PATH, INPUT_CACHE_PATH, ANSWERS_CACHE_PATH]
+CACHE_FILES = [TRAIN_CACHE_PATH, DEV_CACHE_PATH, TEST_CACHE_PATH, VOCAB_CACHE_PATH]
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '.data', "snli"))
 
 
@@ -36,14 +35,13 @@ def save_pkl(f2dump, out_path):
         pickle.dump(f2dump, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def save_cache(train, dev, test, inputs, answers):
+def save_cache(train, dev, test, vocab):
     if not os.path.isdir(CACHE_DIR):
         os.mkdir(CACHE_DIR)
     save_pkl(train, TRAIN_CACHE_PATH)
     save_pkl(dev, DEV_CACHE_PATH)
     save_pkl(test, TEST_CACHE_PATH)
-    save_pkl(inputs, INPUT_CACHE_PATH)
-    save_pkl(answers, ANSWERS_CACHE_PATH)
+    save_pkl(vocab, VOCAB_CACHE_PATH)
 
 
 def load_snli():
@@ -51,13 +49,9 @@ def load_snli():
         return from_cache()
     else:
         inputs = legacy.data.Field(
-            init_token="<s>",
-            eos_token="</s>",
             tokenize='spacy',
             tokenizer_language='en_core_web_sm',
             lower=True,
-            batch_first=True,
-            include_lengths=True
         )
         target = legacy.data.Field(sequential=False, is_target=True)
 
@@ -79,50 +73,6 @@ def load_snli():
 
         inputs.build_vocab(train, min_freq=1, vectors="glove.6B.300d")
         target.build_vocab(train)
-        save_cache(list(train), list(dev), list(test), inputs, target)
-    target = remove_unk(target)
-
-    return train, dev, test, inputs, target
-
-
-def remove_unk(target):
-    target.vocab.stoi.pop('<unk>')
-    target.vocab.itos.remove('<unk>')
-    for k, v in target.vocab.stoi.items():
-        target.vocab.stoi[k] = v - 1
-    return target
-
-# def glov_dict():
-#     glov_dir = wget.download("http://nlp.stanford.edu/data/{}".format('glove.6B.zip'))
-#     zip = zipfile.ZipFile(glov_dir)
-#     zip.extractall(path=".")
-#
-#     glov = {}
-#     with open("./data/glove.6B.300d.txt", 'r') as f:
-#         for line in f:
-#             values = line.split()
-#             word = values[0]
-#             vector = np.asarray(values[1:], "float32")
-#             glov[word] = torch.from_numpy(vector)
-#             glov[word] = glov[word].type(torch.float)
-#     return glov
-#
-#
-# def get_glove_vector(sentences, F2I):
-#     index_sent = 0
-#     sentences_ret = []
-#     for sent in sentences:
-#         sentence = []
-#         index_word = 0
-#         for word in sent:
-#             if word in F2I:
-#                 sentence.append(F2I[word].reshape(1, -1))
-#             else:
-#                 sentence.append(F2I[UNIQUE].reshape(1, -1))
-#             index_word += 1
-#         sentence = torch.cat(sentence)
-#         sentence = sentence.reshape(1, sentence.shape[0], sentence.shape[1])
-#         sentences_ret.append(sentence)
-#         index_sent += 1
-#     return torch.cat(sentences_ret)
-#
+        vocab = Vocab(inputs, taret)
+        save_cache(list(train), list(dev), list(test), vocab)
+    return train, dev, test, vocab
