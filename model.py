@@ -48,7 +48,7 @@ class InnerAttention(nn.Module):
 
     def forward(self, x, x_lens):
         y = self.bilstm(x, x_lens)
-        r_avg = torch.mean(y, dim=1, keepdim=True)
+        r_avg = torch.mean(y, dim=1).unsqueeze(1)
         r_avg = r_avg.permute(0, 2, 1)
         r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]])).permute(0, 2, 1)
         m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
@@ -64,7 +64,6 @@ class Siamese(nn.Module):
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
                                               hidden_dim=hidden_dim,
                                               dropout=dropout)
-        self.softmax = nn.Softmax(dim=1)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
