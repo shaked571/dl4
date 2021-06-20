@@ -25,7 +25,7 @@ class Trainer:
                  steps_to_eval=500):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
-        self.batch_size = 128
+        self.batch_size = 1
         # self.word2i = self.inputs_info.vocab.stoi
         train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
