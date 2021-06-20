@@ -74,6 +74,5 @@ class Siamese(nn.Module):
         mult_vec = prem_atten * hyp_atten
         diff_vec = prem_atten - hyp_atten
         concat_vec = torch.cat([prem_atten, mult_vec, diff_vec, hyp_atten], dim=2)
-        y = self.softmax(concat_vec)
-        y = self.linear_predictor(y).squeeze(1)
+        y = self.linear_predictor(concat_vec).squeeze(1)
         return y
