@@ -21,11 +21,11 @@ def model_xavier():
 
 
 class Trainer:
-    def __init__(self, hidden_dim=100, dropout=0.2, n_ep=1, lr=0.001, how2run=ORIGINAL,
-                 steps_to_eval=500):
+    def __init__(self, hidden_dim=100, dropout=0.2, n_ep=5, lr=0.001, how2run=ORIGINAL,
+                 steps_to_eval=10000):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
-        self.batch_size = 1
+        self.batch_size = 128
         # self.word2i = self.inputs_info.vocab.stoi
         train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
@@ -69,7 +69,7 @@ class Trainer:
         s1_pad = pad_sequence(s1, batch_first=True, padding_value=0)
         s2_pad = pad_sequence(s2, batch_first=True, padding_value=0)
 
-        return s1_pad.to(self.device), s2_pad.to(self.device), sent1_lens, sent2_lens, torch.Tensor(l).to(self.device)
+        return s1_pad.to(self.device), s2_pad.to(self.device), sent1_lens, sent2_lens, torch.Tensor(l).to(self.device).to(torch.int64)
 
     def train(self):
         num_samples = 0
@@ -84,7 +84,7 @@ class Trainer:
                 self.optimizer.zero_grad()
                 self.model.zero_grad()
                 # forward pass: compute predicted outputs by passing inputs to the model
-                output = self.model(s1, s2)  # Eemnded Data Tensor size (1,5)
+                output = self.model(s1, s2, sent1_lens, sent2_lens)
                 loss = self.loss_func(output, target.view(-1))
                 loss.backward()
                 self.optimizer.step()

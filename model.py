@@ -22,14 +22,16 @@ class BiLSTM(nn.Module):
                             batch_first=True,
                             bidirectional=True)
 
-    def forward(self, x):
+    def forward(self, x, x_lens):
         output = self.embedding(x)
         output = self.dropout(output)
+        x_packed = pack_padded_sequence(output, x_lens, batch_first=True, enforce_sorted=False)
         # output = self.relu(output) #TODO need?? read paper
         # output = output.transpose(0, 1)  # make it (seq_len, batch_size, features)
         # output, (hidden, cell) = self.bilstm(output.unsqueeze(0))
-        output, (hidden, cell) = self.bilstm(output)
-        return output, (hidden, cell)
+        output, _ = self.bilstm(x_packed)
+        output, _ = pad_packed_sequence(output, batch_first=True)
+        return output
 
 
 class InnerAttention(nn.Module):
@@ -44,8 +46,8 @@ class InnerAttention(nn.Module):
         self.w_h = nn.Linear(2 * self.hidden_dim, 2 * self.hidden_dim)
         self.w = nn.Linear(2 * self.hidden_dim, 1)
 
-    def forward(self, x):
-        y, (hidden, cell) = self.bilstm(x)
+    def forward(self, x, x_lens):
+        y = self.bilstm(x, x_lens)
         r_avg = torch.mean(y, dim=1, keepdim=True)
         r_avg = r_avg.permute(0, 2, 1)
         r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]])).permute(0, 2, 1)
@@ -65,13 +67,13 @@ class Siamese(nn.Module):
         self.softmax = nn.Softmax(dim=1)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
 
-    def forward(self, prem, hyp):
-        prem_atten = self.inner_attention(prem)
-        hyp_atten = self.inner_attention(hyp)
+    def forward(self, prem, hyp, prem_lens, hyp_lens):
+        prem_atten = self.inner_attention(prem, prem_lens)
+        hyp_atten = self.inner_attention(hyp, hyp_lens)
 
         mult_vec = prem_atten * hyp_atten
         diff_vec = prem_atten - hyp_atten
         concat_vec = torch.cat([prem_atten, mult_vec, diff_vec, hyp_atten], dim=2)
         y = self.softmax(concat_vec)
-        y = self.linear_predictor(y)
+        y = self.linear_predictor(y).squeeze(1)
         return y
