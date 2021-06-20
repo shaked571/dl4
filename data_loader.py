@@ -51,13 +51,9 @@ def load_snli():
         return from_cache()
     else:
         inputs = legacy.data.Field(
-            init_token="<s>",
-            eos_token="</s>",
             tokenize='spacy',
             tokenizer_language='en_core_web_sm',
             lower=True,
-            batch_first=True,
-            include_lengths=True
         )
         target = legacy.data.Field(sequential=False, is_target=True)
 

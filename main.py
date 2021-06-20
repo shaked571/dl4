@@ -21,7 +21,7 @@ def model_xavier():
 
 
 class Trainer:
-    def __init__(self, hidden_dim=100, dropout=0.2, n_ep=5, lr=0.001, how2run=ORIGINAL, steps_to_eval=5000):
+    def __init__(self, hidden_dim=100, dropout=0.2, n_ep=5, lr=0.001, how2run=ORIGINAL, steps_to_eval=1000):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
         self.batch_size = 1
@@ -65,8 +65,8 @@ class Trainer:
         sent1_lens = [len(sent) for sent in s1]
         sent2_lens = [len(sent) for sent in s2]
 
-        s1_pad = pad_sequence(s1, batch_first=True, padding_value=0)
-        s2_pad = pad_sequence(s2, batch_first=True, padding_value=0)
+        s1_pad = pad_sequence(s1, batch_first=True, padding_value=1)
+        s2_pad = pad_sequence(s2, batch_first=True, padding_value=1)
 
         return s1_pad.to(self.device), s2_pad.to(self.device), sent1_lens, sent2_lens, torch.Tensor(l).to(self.device).to(torch.int64)
 

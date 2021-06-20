@@ -12,7 +12,6 @@ class SNLIDataSet(Dataset):
         return len(self.data)
 
     def get_tensor(self, sent):
-        sent = [self.input_info.init_token] + sent + [self.input_info.eos_token]
         res = []
         for w in sent:
             if w in self.input_info.vocab.stoi:
