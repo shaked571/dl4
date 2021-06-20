@@ -23,18 +23,18 @@ def model_xavier():
 class Trainer:
     def __init__(self, hidden_dim=100, dropout=0.2, n_ep=5, lr=0.001, how2run=ORIGINAL, steps_to_eval=5000):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        train_raw, dev_raw, test_raw, self.vocab = load_snli()
-        self.batch_size = 2
+        train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
+        self.batch_size = 1
         # self.word2i = self.inputs_info.vocab.stoi
-        train_set = SNLIDataSet(train_raw,  self.vocab)
-        dev_set = SNLIDataSet(dev_raw, self.vocab)
-        test_set = SNLIDataSet(test_raw, self.vocab)
+        train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
+        dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
+        test_set = SNLIDataSet(test_raw,  self.inputs_info, self.labels_info)
 
         self.train_d = DataLoader(train_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
         self.dev_d = DataLoader(dev_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
         self.test_d = DataLoader(test_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
 
-        self.embedding_vectors = self.vocab.vectors
+        self.embedding_vectors = self.inputs_info.vocab.vectors
         if how2run == ORIGINAL:
             self.model = Siamese(self.embedding_vectors, hidden_dim, dropout)
             self.lr = lr
@@ -65,8 +65,8 @@ class Trainer:
         sent1_lens = [len(sent) for sent in s1]
         sent2_lens = [len(sent) for sent in s2]
 
-        s1_pad = pad_sequence(s1, batch_first=True, padding_value=1)
-        s2_pad = pad_sequence(s2, batch_first=True, padding_value=1)
+        s1_pad = pad_sequence(s1, batch_first=True, padding_value=0)
+        s2_pad = pad_sequence(s2, batch_first=True, padding_value=0)
 
         return s1_pad.to(self.device), s2_pad.to(self.device), sent1_lens, sent2_lens, torch.Tensor(l).to(self.device).to(torch.int64)
 
