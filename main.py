@@ -34,16 +34,16 @@ class Trainer:
     def __init__(self, hidden_dim=100, dropout=0.2, n_ep=10, lr=0.001, how2run=ORIGINAL, steps_to_eval=50000):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
-        self.batch_size = 128
+        self.train_batch_size = 128
+        self.dev_batch_size = 1000
         # self.word2i = self.inputs_info.vocab.stoi
         train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
         test_set = SNLIDataSet(test_raw,  self.inputs_info, self.labels_info)
-        train_set.data = train_set.data[:10000] #TODO just for checkig - DELETE
-        self.train_d = DataLoader(train_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
-        self.dev_d = DataLoader(dev_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
-        self.test_d = DataLoader(test_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
-
+        self.train_d = DataLoader(train_set, batch_size=self.train_batch_size, collate_fn=self.pad_collate)
+        self.dev_d = DataLoader(dev_set, batch_size=self.dev_batch_size, collate_fn=self.pad_collate)
+        self.test_d = DataLoader(test_set, batch_size=self.dev_batch_size, collate_fn=self.pad_collate)
+        self.inputs_info = self.update_unk_vec(self.inputs_info)
         self.embedding_vectors = self.inputs_info.vocab.vectors
         if how2run == ORIGINAL:
             self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout)
@@ -70,6 +70,11 @@ class Trainer:
         self.best_model = None
         self.best_score = 0
 
+    def update_unk_vec(self, inputs_info):
+        unk_vec = torch.Tensor(np.random.uniform(-0.05, 0.05, 300)).to(torch.float32)
+        inputs_info.vocab.vectors[self.inputs_info.vocab.unk_index] = unk_vec
+        return  inputs_info
+
     def pad_collate(self, batch):
         (s1, s2, l) = zip(*batch)
         sent1_lens = [len(sent) for sent in s1]
@@ -88,7 +93,7 @@ class Trainer:
             step_loss = 0
             self.model.train()  # prep model for training
             for step, (s1, s2, sent1_lens, sent2_lens, target) in tqdm(enumerate(self.train_d), total=len(self.train_d)):
-                num_samples += self.batch_size
+                num_samples += self.train_batch_size
                 # clear the gradients of all optimized variables
                 self.optimizer.zero_grad()
                 self.model.zero_grad()
@@ -101,15 +106,16 @@ class Trainer:
                 step_loss += loss.item() * s1.size(0)
                 if num_samples >= self.steps_to_eval:
                     num_samples = 0
-                    print(f"in step: {(step+1)*self.batch_size} train loss: {step_loss}")
+                    print(f"in step: {(step+1)*self.train_batch_size} train loss: {step_loss}")
                     self.writer.add_scalar('Loss/train_step', step_loss, step * (epoch + 1))
                     step_loss = 0.0
                     # print((step+1)*self.train_data.batch_size + epoch * len(self.train_data))
-                    self.evaluate_model((step+1)*self.batch_size + epoch * len(self.train_d), "step", self.dev_d)
+                    self.evaluate_model((step+1) * self.train_batch_size + epoch * len(self.train_d.dataset), "epoch", self.dev_d)
             print(f"in epoch: {epoch + 1} train loss: {train_loss}")
             self.writer.add_scalar('Loss/train', train_loss, epoch+1)
-            print((epoch+1) * len(self.train_d) * self.batch_size)
-            self.evaluate_model((epoch+1) * len(self.train_d)*self.batch_size, "epoch", self.dev_d)
+            print((epoch+1) * len(self.train_d) * self.train_batch_size)
+            self.evaluate_model((epoch+1) * len(self.train_d.dataset), "epoch", self.dev_d)
+            self.evaluate_model((epoch+1) * len(self.train_d.dataset), "train_epoch", self.train_d)
 
     def evaluate_model(self, step, stage, data_set,save_model=True):
         with torch.no_grad():
