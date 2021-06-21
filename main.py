@@ -1,9 +1,7 @@
 import os
-from typing import List, Optional
 import torch.nn as nn
-# from vocab import Vocab, SeqVocab
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -12,8 +10,20 @@ from torch.nn.utils.rnn import pad_sequence
 from data_loader import load_snli
 from dataset import SNLIDataSet
 from model import Siamese
+import random
+import numpy as np
 ORIGINAL = 'o'
 WITH_XAVIER = 'x'
+
+
+def set_seed(seed):
+    os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available() == 'cuda':
+        torch.cuda.manual_seed_all(seed)
 
 
 def model_xavier():
@@ -143,8 +153,8 @@ class Trainer:
         self.evaluate_model(1, 'test', trainer.test_d, save_model=False)
 
 
-
 if __name__ == '__main__':
+    set_seed(1)
     trainer = Trainer()
     trainer.train()
     trainer.test()
