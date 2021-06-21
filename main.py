@@ -1,7 +1,5 @@
 import os
-from typing import List, Optional
 import torch.nn as nn
-# from vocab import Vocab, SeqVocab
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torch import optim
@@ -29,7 +27,7 @@ class Trainer:
         train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
         test_set = SNLIDataSet(test_raw,  self.inputs_info, self.labels_info)
-
+        train_set.data = train_set.data[:10000] #TODO just for checkig - DELETE
         self.train_d = DataLoader(train_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
         self.dev_d = DataLoader(dev_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
         self.test_d = DataLoader(test_set, batch_size=self.batch_size, collate_fn=self.pad_collate)
@@ -123,7 +121,6 @@ class Trainer:
 
             accuracy = 100 * correct / total
             print(f'Accuracy/dev_{stage}: {accuracy}')
-
             self.writer.add_scalar(f'Accuracy/dev_{stage}', accuracy, step)
             self.writer.add_scalar(f'Loss/dev_{stage}', loss, step)
             if accuracy > self.best_score and save_model:
@@ -141,7 +138,6 @@ class Trainer:
     def test(self):
         self.model.load_model(self.saved_model_path)
         self.evaluate_model(1, 'test', trainer.test_d, save_model=False)
-
 
 
 if __name__ == '__main__':
