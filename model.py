@@ -71,3 +71,8 @@ class Siamese(nn.Module):
         concat_vec = torch.cat([prem_atten, mult_vec, diff_vec, hyp_atten], dim=2)
         y = self.linear_predictor(concat_vec).squeeze(1)
         return y
+
+    def load_model(self, path):
+        checkpoint = torch.load(path, map_location="cuda" if torch.cuda.is_available() else "cpu")
+        self.load_state_dict(checkpoint)
+

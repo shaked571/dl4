@@ -36,12 +36,12 @@ class Trainer:
 
         self.embedding_vectors = self.inputs_info.vocab.vectors
         if how2run == ORIGINAL:
-            self.model = Siamese(self.embedding_vectors, hidden_dim, dropout)
+            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout)
             self.lr = lr
             self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.lr)
 
         elif how2run == WITH_XAVIER:
-            self.model = nn.LSTM()  # TODO - just for example
+            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout) # TODO - just for example - need to inherit and runover
             self.optimizer = optim.AdamW(self.model.parameters(),  lr=lr, weight_decay=1e-4)
         else:
             raise ValueError()
@@ -101,7 +101,7 @@ class Trainer:
             print((epoch+1) * len(self.train_d) * self.batch_size)
             self.evaluate_model((epoch+1) * len(self.train_d)*self.batch_size, "epoch", self.dev_d)
 
-    def evaluate_model(self, step, stage, data_set,write=True):
+    def evaluate_model(self, step, stage, data_set,save_model=True):
         with torch.no_grad():
             self.model.eval()
             loss = 0
@@ -110,8 +110,8 @@ class Trainer:
             all_target = []
             total = 0
             correct = 0
-            for step, (s1, s2, sent1_lens, sent2_lens, target) in tqdm(enumerate(data_set), total=len(data_set),
-                                                  desc=f"dev step {step} loop"):
+            for s1, s2, sent1_lens, sent2_lens, target in tqdm(data_set, total=len(data_set),
+                                                               desc=f"dev step {step} loop"):
                 output = self.model(s1, s2, sent1_lens, sent2_lens)
                 loss = self.loss_func(output.detach(), target.view(-1))
                 loss += loss.item() * s1.size(0)
@@ -122,18 +122,13 @@ class Trainer:
                 correct += (predicted == target).sum().item()
 
             accuracy = 100 * correct / total
-            if write:
-                print(f'Accuracy/dev_{stage}: {accuracy}')
+            print(f'Accuracy/dev_{stage}: {accuracy}')
 
-                self.writer.add_scalar(f'Accuracy/dev_{stage}', accuracy, step)
-                self.writer.add_scalar(f'Loss/dev_{stage}', loss, step)
-                if accuracy > self.best_score:
-                    self.best_score = accuracy
-                    torch.save(self.model.state_dict(), self.saved_model_path)
-
-            else:
-                print(f'Accuracy/train_{stage}: {accuracy}')
-
+            self.writer.add_scalar(f'Accuracy/dev_{stage}', accuracy, step)
+            self.writer.add_scalar(f'Loss/dev_{stage}', loss, step)
+            if accuracy > self.best_score and save_model:
+                self.best_score = accuracy
+                torch.save(self.model.state_dict(), self.saved_model_path)
         self.model.train()
 
     def suffix_run(self):
@@ -143,7 +138,13 @@ class Trainer:
         res = res.strip("_")
         return res
 
+    def test(self):
+        self.model.load_model(self.saved_model_path)
+        self.evaluate_model(1, 'test', trainer.test_d, save_model=False)
+
+
 
 if __name__ == '__main__':
     trainer = Trainer()
     trainer.train()
+    trainer.test()
