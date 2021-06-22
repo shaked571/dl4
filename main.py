@@ -59,7 +59,7 @@ class Trainer:
         self.loss_func = nn.CrossEntropyLoss()
         self.model.to(self.device)
         self.model_args = {"drop_lstm": drop_lstm,"drop_embedding": drop_embedding, "xav": xavier,
-                           "adamw": adamw, "epoch": n_ep, "seed": seed, "lr": lr, "batch": batch}
+                           "adamw": adamw, "epoch": n_ep, "seed": seed, "lr": lr, "batch": batch, 'dropout': dropout}
         output_path = self.suffix_run()
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
@@ -166,11 +166,12 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--seed', help='seed', type=int,default=1, required=False)
     parser.add_argument('-l', '--lr', help='learning rate', type=float,default=0.001, required=False)
     parser.add_argument('-b', '--batch', help='train batch size', type=int,default=128, required=False)
+    parser.add_argument('-do', '--drop', help='train batch size', type=float,default=0.25, required=False)
     parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
     print(args.lr)
     set_seed(args.seed)
     trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw,n_ep=args.epoch,
-                      gpu=args.gpu,batch=args.batch, lr=args.lr, seed=args.seed)
+                      gpu=args.gpu,batch=args.batch, lr=args.lr, seed=args.seed, dropout=args.drop)
     trainer.train()
     trainer.test()
