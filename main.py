@@ -34,8 +34,8 @@ def model_xavier():
 class Trainer:
     def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
                   steps_to_eval=50000, gpu=0):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        # self.device = torch.device(gpu)
+        self.device = torch.device(f'cuda:{gpu}') if torch.cuda.is_available() else "cpu"
+        print(self.device)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
         self.train_batch_size = 128
         self.dev_batch_size = 1000
@@ -48,7 +48,7 @@ class Trainer:
         self.inputs_info = self.update_unk_vec(self.inputs_info)
         self.embedding_vectors = self.inputs_info.vocab.vectors
         self.lr = lr
-        self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding,xavier, gpu=gpu)
+        self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding, xavier, device=self.device)
         if adamw:
             self.optimizer = optim.AdamW(self.model.parameters(),  lr=self.lr, weight_decay=1e-4)
         else:
@@ -167,6 +167,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     set_seed(1)
-    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw, gpu=args.gpu,)
+    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw, gpu=args.gpu)
     trainer.train()
     trainer.test()

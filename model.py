@@ -4,10 +4,8 @@ import torch
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm, drop_embedding, gpu=0):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm, drop_embedding):
         super(BiLSTM, self).__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        # self.device = torch.device(gpu)
         self.drop_lstm = drop_lstm
         self.drop_embedding = drop_embedding
 
@@ -47,13 +45,12 @@ class BiLSTM(nn.Module):
 
 
 class InnerAttention(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool,xavier:bool, gpu=0):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool, xavier:bool, device):
         super(InnerAttention, self).__init__()
-        self.device = gpu
-        # self.device = torch.device(gpu)
+        self.device = device
         self.hidden_dim = hidden_dim
         self.tanh = nn.Tanh()
-        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=gpu)
+        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
         self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
@@ -76,15 +73,16 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool,xavier: bool, gpu=0):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, xavier: bool, device):
         super(Siamese, self).__init__()
+        self.device = device
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
                                               hidden_dim=hidden_dim,
                                               dropout=dropout,
                                               drop_lstm=drop_lstm,
                                               drop_embedding=drop_embedding,
                                               xavier=xavier,
-                                              gpu=gpu)
+                                              device=device)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
@@ -97,6 +95,6 @@ class Siamese(nn.Module):
         return y
 
     def load_model(self, path):
-        checkpoint = torch.load(path, map_location="cuda" if torch.cuda.is_available() else "cpu")
+        checkpoint = torch.load(path, map_location=self.device)
         self.load_state_dict(checkpoint)
 
