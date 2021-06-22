@@ -50,8 +50,8 @@ class Trainer:
         self.embedding_vectors = self.inputs_info.vocab.vectors
         if how2run == ORIGINAL:
             self.lr = lr
-            self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.lr)
             self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding)
+            self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.lr)
 
         elif how2run == WITH_XAVIER:
             self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout) # TODO - just for example - need to inherit and runover
