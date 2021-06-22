@@ -42,7 +42,7 @@ class BiLSTM(nn.Module):
         x_packed = pack_padded_sequence(output, x_lens, batch_first=True, enforce_sorted=False)
         output, _ = self.bilstm(x_packed)
         output, _ = pad_packed_sequence(output, batch_first=True)
-        return output.to(self.device)
+        return output
 
 
 class InnerAttention(nn.Module):
@@ -62,6 +62,7 @@ class InnerAttention(nn.Module):
         y = self.bilstm(x, x_lens)
         r_avg = torch.mean(y, dim=1).unsqueeze(1)
         r_avg = r_avg.permute(0, 2, 1)
+        y = y.to(self.device)
         r_avg = r_avg.to(self.device)
         r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]])).permute(0, 2, 1)
         m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
