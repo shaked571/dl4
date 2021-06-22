@@ -32,9 +32,8 @@ def model_xavier():
 
 
 class Trainer:
-    def __init__(self,drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
-                 how2run=ORIGINAL, steps_to_eval=50000,
-                 ):
+    def __init__(self, drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
+                 how2run=ORIGINAL, steps_to_eval=50000):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
         self.train_batch_size = 128

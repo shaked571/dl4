@@ -42,8 +42,7 @@ class BiLSTM(nn.Module):
         x_packed = pack_padded_sequence(output, x_lens, batch_first=True, enforce_sorted=False)
         output, _ = self.bilstm(x_packed)
         output, _ = pad_packed_sequence(output, batch_first=True)
-        return output
-
+        return output.to(self.device)
 
 
 class InnerAttention(nn.Module):
