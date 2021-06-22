@@ -49,7 +49,7 @@ class BiLSTM(nn.Module):
 class InnerAttention(nn.Module):
     def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool,xavier:bool, gpu=0):
         super(InnerAttention, self).__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = gpu
         # self.device = torch.device(gpu)
         self.hidden_dim = hidden_dim
         self.tanh = nn.Tanh()
@@ -68,7 +68,7 @@ class InnerAttention(nn.Module):
         y = self.bilstm(x, x_lens)
         r_avg = torch.mean(y, dim=1).unsqueeze(1)
         r_avg = r_avg.permute(0, 2, 1)
-        r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]])).permute(0, 2, 1)
+        r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]]).to(self.device)).permute(0, 2, 1)
         m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
         alpha = self.softmax(self.w(m))
         r_att = torch.bmm(y.permute(0, 2, 1), alpha).permute(0, 2, 1)
