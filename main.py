@@ -32,7 +32,7 @@ def model_xavier():
 
 
 class Trainer:
-    def __init__(self,drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=10, lr=0.001,
+    def __init__(self,drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
                  how2run=ORIGINAL, steps_to_eval=50000,
                  ):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -159,9 +159,6 @@ class Trainer:
     def test(self):
         self.model.load_model(self.saved_model_path)
         self.evaluate_model(1, 'test', trainer.test_d, save_model=False)
-
-
-
 
 
 if __name__ == '__main__':
