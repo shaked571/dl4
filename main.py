@@ -34,8 +34,8 @@ def model_xavier():
 class Trainer:
     def __init__(self, drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
                  how2run=ORIGINAL, steps_to_eval=50000, gpu=0):
-        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.device = torch.device(gpu)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = torch.device(gpu)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
         self.train_batch_size = 128
         self.dev_batch_size = 1000
@@ -120,7 +120,7 @@ class Trainer:
             self.evaluate_model((epoch+1) * len(self.train_d.dataset), "epoch", self.dev_d)
             self.evaluate_model((epoch+1) * len(self.train_d.dataset), "train_epoch", self.train_d)
 
-    def evaluate_model(self, step, stage, data_set,save_model=True):
+    def evaluate_model(self, step, stage, data_set, save_model=True):
         with torch.no_grad():
             self.model.eval()
             loss = 0
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Aligner model')
     parser.add_argument('-ld', '--lstm_drop', help='lstm dropout', action='store_true')
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
-    parser.add_argument('--gpu', type=int, required=False)
+    parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
 
     set_seed(1)

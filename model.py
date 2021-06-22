@@ -6,8 +6,8 @@ import torch
 class BiLSTM(nn.Module):
     def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm, drop_embedding, gpu=0):
         super(BiLSTM, self).__init__()
-        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.device = torch.device(gpu)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = torch.device(gpu)
         self.drop_lstm = drop_lstm
         self.drop_embedding = drop_embedding
 
@@ -49,8 +49,8 @@ class BiLSTM(nn.Module):
 class InnerAttention(nn.Module):
     def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool, gpu=0):
         super(InnerAttention, self).__init__()
-        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.device = torch.device(gpu)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = torch.device(gpu)
         self.hidden_dim = hidden_dim
         self.tanh = nn.Tanh()
         self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=gpu)
