@@ -13,8 +13,6 @@ from dataset import SNLIDataSet
 from model import Siamese
 import random
 import numpy as np
-ORIGINAL = 'o'
-WITH_XAVIER = 'x'
 
 
 def set_seed(seed):
@@ -60,7 +58,7 @@ class Trainer:
         self.n_epochs = n_ep
         self.loss_func = nn.CrossEntropyLoss()
         self.model.to(self.device)
-        self.model_args = {"drop_lstm": drop_lstm,"drop_embedding": drop_embedding, "xav": xavier, "adamw": adamw}
+        self.model_args = {"drop_lstm": drop_lstm,"drop_embedding": drop_embedding, "xav": xavier, "adamw": adamw, "epoch": n_ep}
         output_path = self.suffix_run()
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
@@ -161,12 +159,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Aligner model')
     parser.add_argument('-ld', '--lstm_drop', help='lstm dropout', action='store_true')
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
-    parser.add_argument('-x', '--xavier', help='embedding dropout', action='store_true')
-    parser.add_argument('-a', '--adamw', help='embedding dropout', action='store_true')
+    parser.add_argument('-x', '--xavier', help='to use xavier init', action='store_true')
+    parser.add_argument('-a', '--adamw', help='to use adamW instead of RMSprop ', action='store_true')
+    parser.add_argument('-e', '--epoch', help='embedding dropout', action='store_true')
     parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
 
     set_seed(1)
-    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw, gpu=args.gpu)
+    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw,n_ep=args.epoch, gpu=args.gpu)
     trainer.train()
     trainer.test()
