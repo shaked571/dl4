@@ -47,7 +47,7 @@ class BiLSTM(nn.Module):
 
 
 class InnerAttention(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool, gpu=0):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool,xavier:bool, gpu=0):
         super(InnerAttention, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # self.device = torch.device(gpu)
@@ -59,6 +59,10 @@ class InnerAttention(nn.Module):
         self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
         self.w_h = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
         self.w = nn.Linear(self.lstm_out_dim, 1)
+        if xavier:
+            nn.init.xavier_uniform_(self.w_y.weight)
+            nn.init.xavier_uniform_(self.w_h.weight)
+            nn.init.xavier_uniform_(self.w.weight)
 
     def forward(self, x, x_lens):
         y = self.bilstm(x, x_lens)
@@ -72,13 +76,14 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, gpu=0):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool,xavier: bool, gpu=0):
         super(Siamese, self).__init__()
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
                                               hidden_dim=hidden_dim,
                                               dropout=dropout,
                                               drop_lstm=drop_lstm,
                                               drop_embedding=drop_embedding,
+                                              xavier=xavier,
                                               gpu=gpu)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
 

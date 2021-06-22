@@ -32,14 +32,13 @@ def model_xavier():
 
 
 class Trainer:
-    def __init__(self, drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
-                 how2run=ORIGINAL, steps_to_eval=50000, gpu=0):
+    def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
+                  steps_to_eval=50000, gpu=0):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # self.device = torch.device(gpu)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
         self.train_batch_size = 128
         self.dev_batch_size = 1000
-        # self.word2i = self.inputs_info.vocab.stoi
         train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
         test_set = SNLIDataSet(test_raw,  self.inputs_info, self.labels_info)
@@ -48,23 +47,20 @@ class Trainer:
         self.test_d = DataLoader(test_set, batch_size=self.dev_batch_size, collate_fn=self.pad_collate)
         self.inputs_info = self.update_unk_vec(self.inputs_info)
         self.embedding_vectors = self.inputs_info.vocab.vectors
-        if how2run == ORIGINAL:
-            self.lr = lr
-            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=gpu)
+        self.lr = lr
+        self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding,xavier, gpu=gpu)
+        if adamw:
+            self.optimizer = optim.AdamW(self.model.parameters(),  lr=self.lr, weight_decay=1e-4)
+        else:
             self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.lr)
 
-        elif how2run == WITH_XAVIER:
-            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, gpu=gpu) # TODO - just for example - need to inherit and runover
-            self.optimizer = optim.AdamW(self.model.parameters(),  lr=lr, weight_decay=1e-4)
-        else:
-            raise ValueError()
         self.dev_batch_size = 4048
 
         self.steps_to_eval = steps_to_eval
         self.n_epochs = n_ep
         self.loss_func = nn.CrossEntropyLoss()
         self.model.to(self.device)
-        self.model_args = {"how2run": how2run, "drop_lstm": drop_lstm,"drop_embedding": drop_embedding}
+        self.model_args = {"drop_lstm": drop_lstm,"drop_embedding": drop_embedding, "xav": xavier, "adamw": adamw}
         output_path = self.suffix_run()
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
@@ -165,10 +161,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Aligner model')
     parser.add_argument('-ld', '--lstm_drop', help='lstm dropout', action='store_true')
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
+    parser.add_argument('-x', '--xavier', help='embedding dropout', action='store_true')
+    parser.add_argument('-a', '--adamw', help='embedding dropout', action='store_true')
     parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
 
     set_seed(1)
-    trainer = Trainer(args.lstm_drop, args.lstm_embedding, gpu=args.gpu)
+    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw, gpu=args.gpu,)
     trainer.train()
     trainer.test()
