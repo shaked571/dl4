@@ -4,9 +4,12 @@ import torch
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.25):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm, drop_embedding):
         super(BiLSTM, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.drop_lstm = drop_lstm
+        self.drop_embedding = drop_embedding
+
         self.hidden_dim = hidden_dim
         self.embedding = nn.Embedding.from_pretrained(
             embeddings=pre_trained_emb, freeze=True
@@ -15,29 +18,41 @@ class BiLSTM(nn.Module):
         self.embed_dim = self.embedding.embedding_dim
         self.dropout_val = dropout
         self.dropout = nn.Dropout(dropout)
-
-        self.bilstm = nn.LSTM(input_size=self.embed_dim,
-                              hidden_size=hidden_dim,
-                              num_layers=2,
-                              batch_first=True,
-                              bidirectional=True)
+        if self.drop_lstm:
+            self.bilstm = nn.LSTM(input_size=self.embed_dim,
+                                  hidden_size=hidden_dim,
+                                  num_layers=2,
+                                  batch_first=True,
+                                  bidirectional=True,
+                                  dropout=self.dropout_val
+                                  )
+        else:
+            self.bilstm = nn.LSTM(input_size=self.embed_dim,
+                                  hidden_size=hidden_dim,
+                                  num_layers=2,
+                                  batch_first=True,
+                                  bidirectional=True,
+                                  )
 
     def forward(self, x, x_lens):
         output = self.embedding(x)
-        output = self.dropout(output)
+        if self.drop_embedding:
+            output = self.dropout(output)
+
         x_packed = pack_padded_sequence(output, x_lens, batch_first=True, enforce_sorted=False)
         output, _ = self.bilstm(x_packed)
         output, _ = pad_packed_sequence(output, batch_first=True)
         return output
 
 
+
 class InnerAttention(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.25):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool):
         super(InnerAttention, self).__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.hidden_dim = hidden_dim
         self.tanh = nn.Tanh()
-        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout)
+        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
         self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
@@ -56,11 +71,13 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout=0.25):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool):
         super(Siamese, self).__init__()
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
                                               hidden_dim=hidden_dim,
-                                              dropout=dropout)
+                                              dropout=dropout,
+                                              drop_lstm=drop_lstm,
+                                              drop_embedding=drop_embedding)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
