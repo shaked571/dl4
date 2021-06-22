@@ -33,8 +33,9 @@ def model_xavier():
 
 class Trainer:
     def __init__(self, drop_lstm: bool, drop_embedding: bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
-                 how2run=ORIGINAL, steps_to_eval=50000,):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+                 how2run=ORIGINAL, steps_to_eval=50000, gpu=0):
+        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device(gpu)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
         self.train_batch_size = 128
         self.dev_batch_size = 1000
@@ -49,11 +50,11 @@ class Trainer:
         self.embedding_vectors = self.inputs_info.vocab.vectors
         if how2run == ORIGINAL:
             self.lr = lr
-            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding)
+            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=gpu)
             self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.lr)
 
         elif how2run == WITH_XAVIER:
-            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout) # TODO - just for example - need to inherit and runover
+            self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, gpu=gpu) # TODO - just for example - need to inherit and runover
             self.optimizer = optim.AdamW(self.model.parameters(),  lr=lr, weight_decay=1e-4)
         else:
             raise ValueError()
@@ -164,9 +165,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Aligner model')
     parser.add_argument('-ld', '--lstm_drop', help='lstm dropout', action='store_true')
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
+    parser.add_argument('--gpu', type=int, required=False)
     args = parser.parse_args()
 
     set_seed(1)
-    trainer = Trainer(args.lstm_drop, args.lstm_embedding)
+    trainer = Trainer(args.lstm_drop, args.lstm_embedding, gpu=args.gpu)
     trainer.train()
     trainer.test()

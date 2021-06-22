@@ -4,9 +4,10 @@ import torch
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm, drop_embedding):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm, drop_embedding, gpu=0):
         super(BiLSTM, self).__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device(gpu)
         self.drop_lstm = drop_lstm
         self.drop_embedding = drop_embedding
 
@@ -46,12 +47,13 @@ class BiLSTM(nn.Module):
 
 
 class InnerAttention(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout: float, drop_lstm: bool, drop_embedding: bool, gpu=0):
         super(InnerAttention, self).__init__()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device(gpu)
         self.hidden_dim = hidden_dim
         self.tanh = nn.Tanh()
-        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
+        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=0)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
         self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
@@ -62,8 +64,6 @@ class InnerAttention(nn.Module):
         y = self.bilstm(x, x_lens)
         r_avg = torch.mean(y, dim=1).unsqueeze(1)
         r_avg = r_avg.permute(0, 2, 1)
-        # y = y.to(self.device)
-        # r_avg = r_avg.to(self.device)
         r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]])).permute(0, 2, 1)
         m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
         alpha = self.softmax(self.w(m))
@@ -72,13 +72,14 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, gpu=0):
         super(Siamese, self).__init__()
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
                                               hidden_dim=hidden_dim,
                                               dropout=dropout,
                                               drop_lstm=drop_lstm,
-                                              drop_embedding=drop_embedding)
+                                              drop_embedding=drop_embedding,
+                                              gpu=gpu)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
