@@ -31,11 +31,11 @@ def model_xavier():
 
 class Trainer:
     def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
-                  steps_to_eval=50000, gpu=0):
+                  steps_to_eval=50000, batch=128,gpu=0, seed=1):
         self.device = torch.device(f'cuda:{gpu}') if torch.cuda.is_available() else "cpu"
         print(self.device)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
-        self.train_batch_size = 128
+        self.train_batch_size = batch
         self.dev_batch_size = 1000
         train_set = SNLIDataSet(train_raw,  self.inputs_info, self.labels_info)
         dev_set = SNLIDataSet(dev_raw,  self.inputs_info, self.labels_info)
@@ -58,7 +58,8 @@ class Trainer:
         self.n_epochs = n_ep
         self.loss_func = nn.CrossEntropyLoss()
         self.model.to(self.device)
-        self.model_args = {"drop_lstm": drop_lstm,"drop_embedding": drop_embedding, "xav": xavier, "adamw": adamw, "epoch": n_ep}
+        self.model_args = {"drop_lstm": drop_lstm,"drop_embedding": drop_embedding, "xav": xavier,
+                           "adamw": adamw, "epoch": n_ep, "seed": seed, "lr": lr, "batch": batch}
         output_path = self.suffix_run()
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
@@ -162,10 +163,14 @@ if __name__ == '__main__':
     parser.add_argument('-x', '--xavier', help='to use xavier init', action='store_true')
     parser.add_argument('-a', '--adamw', help='to use adamW instead of RMSprop ', action='store_true')
     parser.add_argument('-e', '--epoch', help='embedding dropout', type=int,default=10, required=False)
+    parser.add_argument('-s', '--seed', help='seed', type=int,default=1, required=False)
+    parser.add_argument('-l', '--lr', help='learning rate', type=int,default=0.001, required=False)
+    parser.add_argument('-b', '--batch', help='train batch size', type=int,default=128, required=False)
     parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
 
-    set_seed(1)
-    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw,n_ep=args.epoch, gpu=args.gpu)
+    set_seed(args.seed)
+    trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw,n_ep=args.epoch,
+                      gpu=args.gpu,batch=args.batch, lr=args.lr, seed=args.seed)
     trainer.train()
     trainer.test()
