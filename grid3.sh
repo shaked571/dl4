@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # GPU 3
 for lr in 0.001 0.002 0.0001
 do
