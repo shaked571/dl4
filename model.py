@@ -53,7 +53,7 @@ class InnerAttention(nn.Module):
         self.device = torch.device(gpu)
         self.hidden_dim = hidden_dim
         self.tanh = nn.Tanh()
-        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=0)
+        self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding, gpu=gpu)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
         self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
