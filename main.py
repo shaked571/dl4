@@ -162,7 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
     parser.add_argument('-x', '--xavier', help='to use xavier init', action='store_true')
     parser.add_argument('-a', '--adamw', help='to use adamW instead of RMSprop ', action='store_true')
-    parser.add_argument('-e', '--epoch', help='embedding dropout', type=int,default=10, required=False)
+    parser.add_argument('-e', '--epoch', help='embedding dropout', type=int,default=25, required=False)
     parser.add_argument('-s', '--seed', help='seed', type=int,default=1, required=False)
     parser.add_argument('-l', '--lr', help='learning rate', type=int,default=0.001, required=False)
     parser.add_argument('-b', '--batch', help='train batch size', type=int,default=128, required=False)
