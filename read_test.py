@@ -20,7 +20,7 @@ print(args.lr)
 trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw,n_ep=args.epoch,
                   gpu=args.gpu,batch=args.batch, lr=args.lr, seed=args.seed, dropout=args.drop)
 mypath = 'outputs'
-models = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+models = [join(mypath, f) for f in listdir(mypath) if isfile(join(mypath, f))]
 
 for m in models:
     print(m)
