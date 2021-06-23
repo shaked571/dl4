@@ -73,7 +73,7 @@ def load_snli():
                 text_field=inputs, label_field=target
             )
 
-        inputs.build_vocab(train, min_freq=1, vectors="glove.6B.300d")
+        inputs.build_vocab(train, min_freq=1, vectors="glove.840B.300d")
         target.build_vocab(train)
         save_cache(list(train), list(dev), list(test), inputs, target)
     target = remove_unk(target)

@@ -114,6 +114,8 @@ class Trainer:
             print((epoch+1) * len(self.train_d) * self.train_batch_size)
             self.evaluate_model((epoch+1) * len(self.train_d.dataset), "epoch", self.dev_d)
             self.evaluate_model((epoch+1) * len(self.train_d.dataset), "train_epoch", self.train_d)
+        self.writer.flush()
+
 
     def evaluate_model(self, step, stage, data_set, save_model=True):
         with torch.no_grad():
@@ -137,7 +139,7 @@ class Trainer:
 
             accuracy = 100 * correct / total
             print(f'Accuracy/dev_{stage}: {accuracy}')
-            self.writer.add_scalar(f'Accuracy/dev_{stage}', accuracy, step)
+            self.writer.add_scalar(f'Accuracy/{stage}', accuracy, step)
             self.writer.add_scalar(f'Loss/dev_{stage}', loss, step)
             if accuracy > self.best_score and save_model:
                 self.best_score = accuracy
@@ -156,6 +158,8 @@ class Trainer:
             path = self.saved_model_path
         self.model.load_model(path)
         self.evaluate_model(1, 'test', self.test_d, save_model=False)
+        self.writer.flush()
+        self.writer.close()
 
 
 if __name__ == '__main__':

@@ -84,6 +84,7 @@ class Siamese(nn.Module):
                                               xavier=xavier,
                                               device=device)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
         prem_atten = self.inner_attention(prem, prem_lens)
@@ -91,6 +92,8 @@ class Siamese(nn.Module):
         mult_vec = prem_atten * hyp_atten
         diff_vec = prem_atten - hyp_atten
         concat_vec = torch.cat([prem_atten, mult_vec, diff_vec, hyp_atten], dim=2)
+        concat_vec = self.dropout(concat_vec)
+
         y = self.linear_predictor(concat_vec).squeeze(1)
         return y
 
