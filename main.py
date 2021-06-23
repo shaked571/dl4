@@ -151,8 +151,10 @@ class Trainer:
         res = res.strip("_")
         return res
 
-    def test(self):
-        self.model.load_model(self.saved_model_path)
+    def test(self, path=None):
+        if path is None:
+            path = self.saved_model_path
+        self.model.load_model(path)
         self.evaluate_model(1, 'test', trainer.test_d, save_model=False)
 
 
