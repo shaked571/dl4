@@ -155,7 +155,6 @@ class Trainer:
         if path is None:
             path = self.saved_model_path
         self.model.load_model(path)
-        self.evaluate_model(1, 'test', trainer.test_d, save_model=False)
         self.evaluate_model(1, 'test', self.test_d, save_model=False)
 
 
