@@ -3,10 +3,11 @@ import torch
 
 
 class SNLIDataSet(Dataset):
-    def __init__(self, data, input_info, labels_info):
+    def __init__(self, data, input_info, labels_info, remove_intersection):
         self.data = data
         self.input_info = input_info
         self.labels_info = labels_info
+        self.remove = remove_intersection
 
     def __len__(self):
         return len(self.data)
@@ -35,7 +36,8 @@ class SNLIDataSet(Dataset):
         premise = self.data[index].premise
         hyp = self.data[index].hypothesis
         label = self.data[index].label
-        hyp, premise = self.remove_intersection(hyp, premise)
+        if self.remove:
+            hyp, premise = self.remove_intersection(hyp, premise)
 
         hyp_tensor = self.get_tensor(hyp)
         premise_tensor = self.get_tensor(premise)

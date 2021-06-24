@@ -73,7 +73,7 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, xavier: bool, device):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, xavier: bool, device, use_relu):
         super(Siamese, self).__init__()
         self.device = device
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
@@ -85,6 +85,7 @@ class Siamese(nn.Module):
                                               device=device)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
         self.relu = nn.ReLU()
+        self.use_relu = use_relu
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
@@ -96,7 +97,8 @@ class Siamese(nn.Module):
         concat_vec = self.dropout(concat_vec)
 
         y = self.linear_predictor(concat_vec).squeeze(1)
-        # y = self.relu(y)
+        if self.use_relu:
+            y = self.relu(y)
         return y
 
     def load_model(self, path):
