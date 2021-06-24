@@ -20,10 +20,21 @@ class SNLIDataSet(Dataset):
                 res.append(self.input_info.vocab.stoi[self.input_info.unk_token])
         return torch.tensor(res).to(torch.int64)
 
+    def remove_intersection(self, hyp, prem):
+        new_hyp = []
+        for word in hyp:
+            if word in prem:
+                prem.remove(word)
+            else:
+                new_hyp.append(word)
+        return new_hyp, prem
+
     def __getitem__(self, index):
         premise = self.data[index].premise
         hyp = self.data[index].hypothesis
         label = self.data[index].label
+        hyp, premise = self.remove_intersection(hyp, premise)
+
         hyp_tensor = self.get_tensor(hyp)
         premise_tensor = self.get_tensor(premise)
         label_tensor = torch.tensor([self.labels_info.vocab.stoi[label]]).to(torch.int64)
