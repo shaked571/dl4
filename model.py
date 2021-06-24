@@ -96,7 +96,7 @@ class Siamese(nn.Module):
         concat_vec = self.dropout(concat_vec)
 
         y = self.linear_predictor(concat_vec).squeeze(1)
-        y = self.relu(y)
+        # y = self.relu(y)
         return y
 
     def load_model(self, path):
