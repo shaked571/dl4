@@ -31,7 +31,7 @@ def model_xavier():
 
 class Trainer:
     def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=100, dropout=0.25, n_ep=6, lr=0.001,
-                  steps_to_eval=50000, batch=128,gpu=0, seed=1):
+                  steps_to_eval=50000, batch=128, gpu=0, seed=1):
         self.device = torch.device(f'cuda:{gpu}') if torch.cuda.is_available() else "cpu"
         print(self.device)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
@@ -168,11 +168,11 @@ if __name__ == '__main__':
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
     parser.add_argument('-x', '--xavier', help='to use xavier init', action='store_true')
     parser.add_argument('-a', '--adamw', help='to use adamW instead of RMSprop ', action='store_true')
-    parser.add_argument('-e', '--epoch', help='embedding dropout', type=int,default=15, required=False)
+    parser.add_argument('-e', '--epoch', help='embedding dropout', type=int, default=10, required=False)
     parser.add_argument('-s', '--seed', help='seed', type=int,default=1, required=False)
-    parser.add_argument('-l', '--lr', help='learning rate', type=float,default=0.001, required=False)
-    parser.add_argument('-b', '--batch', help='train batch size', type=int,default=128, required=False)
-    parser.add_argument('-do', '--drop', help='train batch size', type=float,default=0.25, required=False)
+    parser.add_argument('-l', '--lr', help='learning rate', type=float, default=0.001, required=False)
+    parser.add_argument('-b', '--batch', help='train batch size', type=int, default=128, required=False)
+    parser.add_argument('-do', '--drop', help='train batch size', type=float, default=0.25, required=False)
     parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
     print(args.lr)
