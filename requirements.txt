@@ -18,6 +18,7 @@ packaging==20.9
 pandas==1.2.4
 pathy==0.5.2
 preshed==3.0.5
+prettytable==2.1.0
 pyarrow==3.0.0
 pydantic==1.7.4
 pyparsing==2.4.7
