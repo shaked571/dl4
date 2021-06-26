@@ -53,25 +53,34 @@ class InnerAttention(nn.Module):
         self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
-        self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
-        self.w_h = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
-        self.w = nn.Linear(self.lstm_out_dim, 1)
+        self.w_y_h = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
+        self.w_h_h = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
+        self.w_h = nn.Linear(self.lstm_out_dim, 1)
+        self.w_y_p = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
+        self.w_h_p = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
+        self.w_p = nn.Linear(self.lstm_out_dim, 1)
         if xavier:
-            nn.init.xavier_uniform_(self.w_y.weight)
+            nn.init.xavier_uniform_(self.w_y_h.weight)
+            nn.init.xavier_uniform_(self.w_h_h.weight)
             nn.init.xavier_uniform_(self.w_h.weight)
-            nn.init.xavier_uniform_(self.w.weight)
+            nn.init.xavier_uniform_(self.w_y_p.weight)
+            nn.init.xavier_uniform_(self.w_h_p.weight)
+            nn.init.xavier_uniform_(self.w_p.weight)
 
-    def forward(self, x, x_lens):
+    def forward(self, x, x_lens, is_hyp):
         y = self.bilstm(x, x_lens)
         r_avg = torch.mean(y, dim=1).unsqueeze(1)
-        if False:
-            r_avg = r_avg.permute(0, 2, 1)
-            r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]]).to(self.device)).permute(0, 2, 1)
-            m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
-            alpha = self.softmax(self.w(m))
+        r_avg = r_avg.permute(0, 2, 1)
+        r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]]).to(self.device)).permute(0, 2, 1)
+        if is_hyp:
+            m = self.tanh(self.w_y_h(y) + self.w_h_h(r_avg_e_l))
+            alpha = self.softmax(self.w_h(m))
             r_att = torch.bmm(y.permute(0, 2, 1), alpha).permute(0, 2, 1)
-        # return r_att
-        return r_avg
+        else:
+            m = self.tanh(self.w_y_p(y) + self.w_h_p(r_avg_e_l))
+            alpha = self.softmax(self.w_p(m))
+            r_att = torch.bmm(y.permute(0, 2, 1), alpha).permute(0, 2, 1)
+        return r_att
 
 
 class Siamese(nn.Module):
@@ -91,8 +100,8 @@ class Siamese(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
-        prem_atten = self.inner_attention(prem, prem_lens)
-        hyp_atten = self.inner_attention(hyp, hyp_lens)
+        prem_atten = self.inner_attention(prem, prem_lens, is_hyp=False)
+        hyp_atten = self.inner_attention(hyp, hyp_lens, is_hyp=True)
         mult_vec = prem_atten * hyp_atten
         diff_vec = prem_atten - hyp_atten
         concat_vec = torch.cat([prem_atten, mult_vec, diff_vec, hyp_atten], dim=2)
