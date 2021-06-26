@@ -84,7 +84,7 @@ class Siamese(nn.Module):
                                               xavier=xavier,
                                               device=device)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
-        self.relu = nn.ReLU()
+        self.tanh = nn.Tanh()
         self.use_relu = use_relu
         self.dropout = nn.Dropout(dropout)
 
@@ -98,7 +98,7 @@ class Siamese(nn.Module):
 
         y = self.linear_predictor(concat_vec).squeeze(1)
         if self.use_relu:
-            y = self.relu(y)
+            y = self.tanh(y)
         return y
 
     def load_model(self, path):
