@@ -1,7 +1,7 @@
 #!/bin/sh
 # GPU 3
 
-for lr in 0.001 0.002 0.0001
+for lr in 0.002 0.0001
 do
   for do in 0.4 0.15
   do
