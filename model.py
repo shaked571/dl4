@@ -64,12 +64,14 @@ class InnerAttention(nn.Module):
     def forward(self, x, x_lens):
         y = self.bilstm(x, x_lens)
         r_avg = torch.mean(y, dim=1).unsqueeze(1)
-        r_avg = r_avg.permute(0, 2, 1)
-        r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]]).to(self.device)).permute(0, 2, 1)
-        m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
-        alpha = self.softmax(self.w(m))
-        r_att = torch.bmm(y.permute(0, 2, 1), alpha).permute(0, 2, 1)
-        return r_att
+        if False:
+            r_avg = r_avg.permute(0, 2, 1)
+            r_avg_e_l = torch.matmul(r_avg, torch.ones([1, y.shape[1]]).to(self.device)).permute(0, 2, 1)
+            m = self.tanh(self.w_y(y) + self.w_h(r_avg_e_l))
+            alpha = self.softmax(self.w(m))
+            r_att = torch.bmm(y.permute(0, 2, 1), alpha).permute(0, 2, 1)
+        # return r_att
+        return r_avg
 
 
 class Siamese(nn.Module):
