@@ -20,7 +20,7 @@ class BiLSTM(nn.Module):
         if self.drop_lstm:
             self.bilstm = nn.LSTM(input_size=self.embed_dim,
                                   hidden_size=hidden_dim,
-                                  num_layers=2,
+                                  num_layers=1,
                                   batch_first=True,
                                   bidirectional=True,
                                   dropout=self.dropout_val
@@ -28,7 +28,7 @@ class BiLSTM(nn.Module):
         else:
             self.bilstm = nn.LSTM(input_size=self.embed_dim,
                                   hidden_size=hidden_dim,
-                                  num_layers=2,
+                                  num_layers=1,
                                   batch_first=True,
                                   bidirectional=True,
                                   )
