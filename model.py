@@ -17,22 +17,14 @@ class BiLSTM(nn.Module):
         self.embed_dim = self.embedding.embedding_dim
         self.dropout_val = dropout
         self.dropout = nn.Dropout(dropout)
-        if self.drop_lstm:
-            self.bilstm = nn.LSTM(input_size=self.embed_dim,
-                                  hidden_size=hidden_dim,
-                                  num_layers=2,
-                                  batch_first=True,
-                                  bidirectional=True,
-                                  dropout=self.dropout_val
-                                  )
-        else:
-            self.bilstm = nn.LSTM(input_size=self.embed_dim,
-                                  hidden_size=hidden_dim,
-                                  num_layers=2,
-                                  batch_first=True,
-                                  bidirectional=True,
-                                  )
-
+        self.num_layers = 1
+        self.bilstm = nn.LSTM(input_size=self.embed_dim,
+                              hidden_size=hidden_dim,
+                              num_layers= self.num_layers,
+                              batch_first=True,
+                              bidirectional=True,
+                              dropout=self.dropout_val if self.drop_lstm and self.num_layers > 1 else 0
+                              )
     def forward(self, x, x_lens):
         output = self.embedding(x)
         if self.drop_embedding:
@@ -53,9 +45,10 @@ class InnerAttention(nn.Module):
         self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
-        self.w_y = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
-        self.w_h = nn.Linear(self.lstm_out_dim, self.lstm_out_dim)
-        self.w = nn.Linear(self.lstm_out_dim, 1)
+        self.attention_dim = 4 * self.hidden_dim
+        self.w_y = nn.Linear(self.lstm_out_dim, self.attention_dim)
+        self.w_h = nn.Linear(self.lstm_out_dim, self.attention_dim)
+        self.w = nn.Linear(self.attention_dim, 1)
         if xavier:
             nn.init.xavier_uniform_(self.w_y.weight)
             nn.init.xavier_uniform_(self.w_h.weight)
@@ -73,7 +66,7 @@ class InnerAttention(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, xavier: bool, device, use_relu):
+    def __init__(self, pre_trained_emb, hidden_dim: int, dropout, drop_lstm: bool, drop_embedding: bool, xavier: bool, device):
         super(Siamese, self).__init__()
         self.device = device
         self.inner_attention = InnerAttention(pre_trained_emb=pre_trained_emb,
@@ -97,8 +90,7 @@ class Siamese(nn.Module):
         concat_vec = self.dropout(concat_vec)
 
         y = self.linear_predictor(concat_vec).squeeze(1)
-        if self.use_relu:
-            y = self.tanh(y)
+        y = self.tanh(y)
         return y
 
     def load_model(self, path):

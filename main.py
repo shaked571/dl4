@@ -43,7 +43,7 @@ def model_xavier():
 
 class Trainer:
     def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=300, dropout=0.25,
-                 n_ep=6, diff=False, relu=False, lr=0.001, steps_to_eval=50000, batch=128, gpu=0, seed=1):
+                 n_ep=6, diff=False, lr=0.001, steps_to_eval=50000, batch=128, gpu=0, seed=1):
         self.device = torch.device(f'cuda:{gpu}') if torch.cuda.is_available() else "cpu"
         print(self.device)
         train_raw, dev_raw, test_raw, self.inputs_info, self.labels_info = load_snli()
@@ -58,9 +58,9 @@ class Trainer:
         self.inputs_info = self.update_unk_vec(self.inputs_info)
         self.embedding_vectors = self.inputs_info.vocab.vectors
         self.lr = lr
-        self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding, xavier, device=self.device, use_relu=relu)
+        self.model: Siamese = Siamese(self.embedding_vectors, hidden_dim, dropout, drop_lstm, drop_embedding, xavier, device=self.device)
         if adamw:
-            self.optimizer = optim.AdamW(self.model.parameters(),  lr=self.lr, weight_decay=1e-4)
+            self.optimizer = optim.AdamW(self.model.parameters(),  lr=self.lr, weight_decay=1e-3)
         else:
             self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.lr)
 
@@ -70,7 +70,7 @@ class Trainer:
         self.n_epochs = n_ep
         self.loss_func = nn.CrossEntropyLoss()
         self.model.to(self.device)
-        self.model_args = {"drop_lstm": drop_lstm, "drop_embedding": drop_embedding, "xav": xavier, "relu": relu,
+        self.model_args = {"drop_lstm": drop_lstm, "drop_embedding": drop_embedding, "xav": xavier,
                            "diff": diff, "adamw": adamw, "epoch": n_ep, "seed": seed, "lr": lr, "batch": batch,
                            'dropout': dropout}
         output_path = self.suffix_run()
@@ -178,21 +178,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Aligner model')
     parser.add_argument('-ld', '--lstm_drop', help='lstm dropout', action='store_true')
     parser.add_argument('-le', '--lstm_embedding', help='embedding dropout', action='store_true')
-    parser.add_argument('-r', '--relu', help='to use relu', action='store_true')
     parser.add_argument('-d', '--difference', help='to use difference words between hyp anf prem', action='store_true')
     parser.add_argument('-x', '--xavier', help='to use xavier init', action='store_true')
     parser.add_argument('-a', '--adamw', help='to use adamW instead of RMSprop ', action='store_true')
     parser.add_argument('-e', '--epoch', help='embedding dropout', type=int, default=10, required=False)
     parser.add_argument('-s', '--seed', help='seed', type=int, default=1, required=False)
-    parser.add_argument('-l', '--lr', help='learning rate', type=float, default=0.001, required=False)
+    parser.add_argument('-l', '--lr', help='learning rate', type=float, default=0.0095, required=False)
     parser.add_argument('-b', '--batch', help='train batch size', type=int, default=128, required=False)
-    parser.add_argument('-do', '--drop', help='train batch size', type=float, default=0.25, required=False)
+    parser.add_argument('-do', '--drop', help='drop out value', type=float, default=0.25, required=False)
     parser.add_argument('--gpu', type=int, default=0, required=False)
     args = parser.parse_args()
     print(args.lr)
     set_seed(args.seed)
     trainer = Trainer(args.lstm_drop, args.lstm_embedding, args.xavier, args.adamw, n_ep=args.epoch,
-                      diff=args.difference, relu=args.relu, gpu=args.gpu, batch=args.batch, lr=args.lr, seed=args.seed,
+                      diff=args.difference, gpu=args.gpu, batch=args.batch, lr=args.lr, seed=args.seed,
                       dropout=args.drop)
 
     model_parameters = filter(lambda p: p.requires_grad, trainer.model.parameters())
