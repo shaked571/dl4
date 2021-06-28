@@ -163,8 +163,8 @@ class Trainer:
         for k, v in self.model_args.items():
             res += f"{k}_{v}_"
         res = res.strip("_")
-        res += "extra_projection"
-        return
+        res += "extra_projection_2"
+        return res
 
     def test(self, path=None):
         if path is None:

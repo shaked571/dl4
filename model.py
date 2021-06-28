@@ -77,7 +77,8 @@ class Siamese(nn.Module):
                                               xavier=xavier,
                                               device=device)
         self.linear1 = nn.Linear(8 * hidden_dim, hidden_dim)
-        self.linear_predictor = nn.Linear(hidden_dim, 3)
+        self.linear2 = nn.Linear(hidden_dim, int(hidden_dim/2))
+        self.linear_predictor = nn.Linear(int(hidden_dim/2), 3)
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(dropout)
 
@@ -90,7 +91,8 @@ class Siamese(nn.Module):
         concat_vec = self.dropout(concat_vec)
         y = self.linear1(concat_vec)
         y = self.tanh(y)
-        y = self.dropout(y)
+        y = self.linear2(y)
+        y = self.tanh(y)
         y = self.linear_predictor(y).squeeze(1)
         y = self.tanh(y)
         return y
