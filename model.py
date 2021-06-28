@@ -90,6 +90,7 @@ class Siamese(nn.Module):
         concat_vec = self.dropout(concat_vec)
         y = self.linear1(concat_vec)
         y = self.tanh(y)
+        y = self.dropout(y)
         y = self.linear_predictor(y).squeeze(1)
         y = self.tanh(y)
         return y
