@@ -25,6 +25,7 @@ class BiLSTM(nn.Module):
                               bidirectional=True,
                               dropout=self.dropout_val if self.drop_lstm and self.num_layers > 1 else 0
                               )
+
     def forward(self, x, x_lens):
         output = self.embedding(x)
         if self.drop_embedding:
