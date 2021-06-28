@@ -42,7 +42,7 @@ def model_xavier():
 
 
 class Trainer:
-    def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=400, dropout=0.25,
+    def __init__(self, drop_lstm: bool, drop_embedding: bool, xavier: bool, adamw:bool, hidden_dim=300, dropout=0.25,
                  n_ep=6, diff=False, lr=0.001, steps_to_eval=50000, batch=128, gpu=0, seed=1):
         self.device = torch.device(f'cuda:{gpu}') if torch.cuda.is_available() else "cpu"
         print(self.device)

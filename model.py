@@ -45,7 +45,7 @@ class InnerAttention(nn.Module):
         self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
-        self.attention_dim = self.hidden_dim
+        self.attention_dim = int(self.hidden_dim * 1.7)
         self.w_y = nn.Linear(self.lstm_out_dim, self.attention_dim)
         self.w_h = nn.Linear(self.lstm_out_dim, self.attention_dim)
         self.w = nn.Linear(self.attention_dim, 1)
@@ -76,7 +76,8 @@ class Siamese(nn.Module):
                                               drop_embedding=drop_embedding,
                                               xavier=xavier,
                                               device=device)
-        self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
+        self.linear1 = nn.Linear(8 * hidden_dim, hidden_dim)
+        self.linear_predictor = nn.Linear(hidden_dim, 3)
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(dropout)
 
@@ -87,8 +88,9 @@ class Siamese(nn.Module):
         diff_vec = prem_atten - hyp_atten
         concat_vec = torch.cat([prem_atten, mult_vec, diff_vec, hyp_atten], dim=2)
         concat_vec = self.dropout(concat_vec)
-
-        y = self.linear_predictor(concat_vec).squeeze(1)
+        y = self.linear1(concat_vec)
+        y = self.tanh(y)
+        y = self.linear_predictor(y).squeeze(1)
         y = self.tanh(y)
         return y
 
