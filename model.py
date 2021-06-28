@@ -45,7 +45,7 @@ class InnerAttention(nn.Module):
         self.bilstm = BiLSTM(pre_trained_emb, hidden_dim, dropout, drop_lstm, drop_embedding)
         self.softmax = nn.Softmax(dim=1)
         self.lstm_out_dim = 2 * self.hidden_dim
-        self.attention_dim = 4 * self.hidden_dim
+        self.attention_dim = self.hidden_dim
         self.w_y = nn.Linear(self.lstm_out_dim, self.attention_dim)
         self.w_h = nn.Linear(self.lstm_out_dim, self.attention_dim)
         self.w = nn.Linear(self.attention_dim, 1)
@@ -78,7 +78,6 @@ class Siamese(nn.Module):
                                               device=device)
         self.linear_predictor = nn.Linear(8 * hidden_dim, 3)
         self.tanh = nn.Tanh()
-        self.use_relu = use_relu
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, prem, hyp, prem_lens, hyp_lens):
