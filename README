@@ -1,0 +1,13 @@
+Env:
+el Shaked Greenfeld 305030868
+Danit Yshaayahu 312434269
+
+1. environment - activate conda environment:
+    1.1 conda create -n "myenv" python=3.8
+    1.2 pip install -r requirements.txt
+    1.3 install the torch recoding to your GPU (we worked on a TRX 2080TI with Cuda 11)
+    1.3 conda activate myenv
+
+The line to run out program to replicate the result is (Need to specify which gpu you will work on default is 0):
+
+>> python main.py -s 17 --gpu <int> -x -a -le -ld -l 0.001 -do 0.25 -e 20
